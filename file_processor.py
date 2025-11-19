@@ -96,7 +96,7 @@ with st.sidebar:
     
 # Main application logic
 if input_option == "Upload Files":
-    uploaded_files = st.file_uploader("Choose files (PDF, JPG, PNG, DOCX)", type=["pdf", "jpg", "jpeg", "png", "docx"], accept_multiple_files=True)
+    uploaded_files = st.file_uploader("Choose files (PDF)", type=["pdf"], accept_multiple_files=True)
     if uploaded_files and st.button("Process Files"):
         if api_key:
             documents = []

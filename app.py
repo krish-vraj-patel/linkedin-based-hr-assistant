@@ -22,7 +22,7 @@ with st.sidebar:
         os.environ["GOOGLE_API_KEY"] = api_key
 
 # File uploader
-uploaded_file = st.file_uploader("Choose a file", type=["pdf", "png", "jpg", "jpeg", "docx"])
+uploaded_file = st.file_uploader("Choose a file", type=["pdf"])
 if uploaded_file is not None:
     if st.button("Process File"):
         if api_key:
