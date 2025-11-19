@@ -239,7 +239,7 @@ else:
                 retriever=st.session_state.vectorstore.as_retriever(),
                 return_source_documents=True,
             )
-            st.success("Chatbot ready! Ask your HR questions.")
+            st.success("Assistant is online. Share your query to get a response.")
 
     except Exception as e:
         # Improved error handling for common issues
