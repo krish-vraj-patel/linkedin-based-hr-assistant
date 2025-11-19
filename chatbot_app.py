@@ -39,11 +39,12 @@ Welcome to the **Krish technolabs HR Chatbot**, your **HR Assistant**! 💬
 I can assist with questions about company policies, training materials, rate cards, and more.
 """)
 
-# Sidebar for API key input
-with st.sidebar:
-    api_key = st.text_input("Enter your Gemini API Key", type="password")
-    if api_key:
-        os.environ["GOOGLE_API_KEY"] = api_key
+# User console should not expose API key configuration
+if not os.getenv("GOOGLE_API_KEY"):
+    st.warning(
+        "The chatbot is not connected to the HR knowledgebase yet. "
+        "Please contact an administrator to configure the Gemini API key."
+    )
 
 # Initialize session state for chat history
 if "messages" not in st.session_state:
@@ -124,7 +125,7 @@ if prompt := st.chat_input("Type your message here..."):
             st.session_state.messages.pop() 
             
     elif not os.getenv("GOOGLE_API_KEY"):
-        st.info("Please provide your Gemini API key in the sidebar to start the chatbot.")
+        st.info("The chatbot is waiting for the admin to configure the Gemini API key.")
     elif "rag_chain" not in st.session_state:
         st.info("Waiting for initialization. Ensure 'file_processor.py' has been run to create the FAISS index.")
 # --- END CORRECTED USER INPUT AND CHAT LOGIC BLOCK ---
