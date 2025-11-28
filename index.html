@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Krish HR Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+    <!-- Mammoth.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <!-- Marked.js for markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+    <!-- Animated Background -->
+    <div class="background-aurora"></div>
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loader-container">
+            <div class="spinner"></div>
+            <p class="loader-text">Loading Krish HR Assistant...</p>
+        </div>
+    </div>
+
+    <!-- Admin Password Modal -->
+    <div id="admin-password-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-icon">🔐</div>
+            <h2 class="modal-title">Admin Authentication</h2>
+            <p class="modal-subtitle">Enter your admin passkey to access the system</p>
+            <input type="password" id="admin-password-input" class="admin-input" placeholder="••••••••••"
+                onkeypress="handlePasswordKeyPress(event)">
+            <div id="password-error" class="status-message error hidden">Access Denied - Incorrect passkey</div>
+            <button class="btn-primary full-width" onclick="checkAdminPassword()">AUTHENTICATE</button>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <div class="brand">
+                <img src="assets/logo.svg" alt="Krish Technolabs Logo" class="brand-logo">
+                <span>Krish HR Assistant</span>
+            </div>
+            <a href="#" class="nav-link" onclick="location.reload(); return false;">Reset Session</a>
+        </div>
+    </header>
+
+    <!-- Main Interface -->
+    <div id="user-interface" class="user-interface">
+        <div class="chat-container" id="user-chat-messages">
+            <div class="messages-wrapper">
+                <!-- Welcome Hero -->
+                <div class="welcome-hero">
+                    <div class="hero-accent"></div>
+                    <h1 class="hero-title">Welcome to Krish HR</h1>
+                    <p class="hero-subtitle">Your AI-powered assistant for company policies and employee benefits.</p>
+
+                    <div class="quick-actions">
+                        <button class="action-chip" onclick="askQuickQuestion('What types of leave are available? List only.')">
+                            <span class="chip-icon">📋</span>
+                            Leave Types
+                        </button>
+                        <button class="action-chip" onclick="askQuickQuestion('Medical insurance coverage')">
+                            <span class="chip-icon">🏥</span>
+                            Medical Insurance
+                        </button>
+                        <button class="action-chip" onclick="askQuickQuestion('What are the work timings?')">
+                            <span class="chip-icon">⏰</span>
+                            Work Timings
+                        </button>
+                        <button class="action-chip" onclick="askQuickQuestion('Holiday calendar and dates in tabular form')">
+                            <span class="chip-icon">🗓️</span>
+                            Holidays
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-wrapper">
+            <input type="text" id="user-chat-input" placeholder="Ask a question about company policies..."
+                onkeypress="handleUserChatKeyPress(event)" autocomplete="off">
+            <button class="send-btn" onclick="sendUserMessage()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 2L11 13m11-11l-7 20-4-9-9-4 20-7z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Admin Interface -->
+    <div id="admin-interface" class="admin-interface">
+        <div class="admin-container">
+            <div class="admin-header">
+                <div class="admin-title-section">
+                    <h1 class="admin-title">System Administration</h1>
+                    <p class="admin-subtitle">Manage API configuration and document ingestion</p>
+                </div>
+                <button class="btn-secondary" onclick="location.href='index.html'; return false;">✕ Close Admin</button>
+            </div>
+
+            <div class="admin-nav">
+                <button class="admin-nav-btn active" id="config-nav" onclick="switchAdminTab('config')">
+                    <span class="nav-icon">⚙️</span>Configuration
+                </button>
+                <button class="admin-nav-btn" id="upload-nav" onclick="switchAdminTab('upload')">
+                    <span class="nav-icon">📤</span>Document Ingestion
+                </button>
+            </div>
+
+            <!-- Configuration Tab -->
+            <div id="config-tab" class="admin-tab active">
+                <div class="form-section">
+                    <h3 class="form-title">API Configuration</h3>
+                    <p class="form-description">Configure your API keys to enable the HR Assistant</p>
+
+                    <div class="form-group">
+                        <label class="form-label">Gemini API Key</label>
+                        <input type="password" id="gemini-key" class="admin-input" placeholder="AI_...">
+                        <p class="form-hint">Your Google Gemini API key for text generation</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Pinecone API Key</label>
+                        <input type="password" id="pinecone-key" class="admin-input" placeholder="pcsk_...">
+                        <p class="form-hint">Your Pinecone API key for vector search</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Pinecone Index URL</label>
+                        <input type="text" id="pinecone-url" class="admin-input"
+                            placeholder="https://your-index.pinecone.io">
+                        <p class="form-hint">Full URL to your Pinecone index</p>
+                    </div>
+
+                    <button class="btn-primary" onclick="saveConfig()">💾 Save Configuration</button>
+                    <div id="config-status" class="status-message hidden"></div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-title">Admin Security</h3>
+                    <p class="form-description">Update the passkey required to access the administration console.</p>
+
+                    <div class="form-group">
+                        <label class="form-label">Current Passkey</label>
+                        <input type="password" id="current-admin-pass" class="admin-input"
+                            placeholder="Current passkey">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">New Passkey</label>
+                        <input type="password" id="new-admin-pass" class="admin-input"
+                            placeholder="New passkey (min. 8 characters)">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Confirm New Passkey</label>
+                        <input type="password" id="confirm-admin-pass" class="admin-input"
+                            placeholder="Re-enter new passkey">
+                    </div>
+
+                    <button class="btn-primary" onclick="updateAdminPassword()">🔒 Update Passkey</button>
+                    <div id="admin-pass-status" class="status-message hidden"></div>
+                </div>
+            </div>
+
+            <!-- Upload Tab -->
+            <div id="upload-tab" class="admin-tab hidden">
+                <div class="form-section">
+                    <h3 class="form-title">Document Ingestion</h3>
+                    <p class="form-description">Upload HR policies and documents to build your knowledge base</p>
+
+                    <div class="drop-zone" id="drop-zone">
+                        <div class="drop-zone-icon">📁</div>
+                        <p class="drop-zone-title">Drop your files here</p>
+                        <p class="drop-zone-subtitle">or click to select PDF & DOCX files</p>
+                        <input type="file" id="file-input" multiple accept=".pdf,.docx" style="display: none;"
+                            onchange="handleFileSelect(event)">
+                    </div>
+
+                    <div id="file-list" class="file-list"></div>
+                    <button id="process-files-btn" class="btn-primary full-width"
+                        style="display: none; margin-top: 24px;" onclick="processFiles()">
+                        🚀 Process & Upload Files
+                    </button>
+                    <div id="upload-status" class="status-message hidden"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="particles.js"></script>
+    <script src="app.js"></script>
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</body>
+
+</html>
